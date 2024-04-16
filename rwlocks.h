@@ -3,8 +3,6 @@
 
 #include <semaphore.h>
 
-extern rwlock_t mutex;
-
 typedef struct
 {
     sem_t writelock;
@@ -17,5 +15,7 @@ void rwlock_acquire_readlock(rwlock_t *lock);
 void rwlock_release_readlock(rwlock_t *lock);
 void rwlock_acquire_writelock(rwlock_t *lock);
 void rwlock_release_writelock(rwlock_t *lock);
+
+extern rwlock_t mutex;
 
 #endif

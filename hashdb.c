@@ -2,14 +2,16 @@
 #include "rwlocks.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
+// head of hash table list
 hashRecord *hashTable = NULL;
 
-uint32_t jenkins_one_at_a_time_hash(char *key, size_t length)
+uint32_t jenkins_one_at_a_time_hash(char *key)
 {
     size_t i = 0;
     uint32_t hash = 0;
-    while (i != length)
+    while (i != strlen(key))
     {
         hash += key[i++];
         hash += hash << 10;
@@ -23,16 +25,84 @@ uint32_t jenkins_one_at_a_time_hash(char *key, size_t length)
 
 void insert(char *name, uint32_t salary)
 {
+    uint32_t hash = jenkins_one_at_a_time_hash(name);
+
+    rwlock_acquire_writelock(&mutex);
+
+    hashRecord *current = hashTable;
+    hashRecord *prev = NULL;
+
+    // search for existing key and update if found
+    while (current != NULL)
+    {
+        if (current->hash == hash && strcmp(current->name, name) == 0)
+        {
+            current->salary = salary;         // update the existing record
+            rwlock_release_writelock(&mutex); // release the write lock
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    // create new record if not found
+    hashRecord *newRecord = malloc(sizeof(hashRecord));
+    if (!newRecord)
+    {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(newRecord->name, name);
+    newRecord->salary = salary;
+    newRecord->hash = hash;
+    newRecord->next = NULL;
+
+    if (prev == NULL)
+    {
+        hashTable = newRecord;
+    }
+    else
+    {
+        prev->next = newRecord;
+    }
+
+    // release write lock
+    rwlock_release_writelock(&mutex);
 }
 
 void delete(char *name)
 {
+    uint32_t hash = jenkins_one_at_a_time_hash(name);
+
+    rwlock_acquire_writelock(&mutex);
+
+    // deletion logic
+
+    rwlock_release_writelock(&mutex);
 }
 
 uint32_t search(char *name)
 {
+    uint32_t hash = jenkins_one_at_a_time_hash(name);
+
+    rwlock_acquire_readlock(&mutex);
+
+    // search logic
+
+    rwlock_release_readlock(&mutex);
+    return 0;
 }
 
 void printHashTable()
 {
+    rwlock_acquire_readlock(&mutex);
+
+    hashRecord *current = hashTable;
+    while (current != NULL)
+    {
+        printf("%u, %s, %u\n", current->hash, current->name, current->salary);
+        current = current->next;
+    }
+
+    rwlock_release_readlock(&mutex);
 }
