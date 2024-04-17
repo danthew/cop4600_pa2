@@ -95,16 +95,30 @@ void delete(char *name)
     rwlock_release_writelock(&mutex);
 }
 
-uint32_t search(char *name)
+hashRecord* search(char *name)
 {
     uint32_t hash = jenkins_one_at_a_time_hash(name);
 
     rwlock_acquire_readlock(&mutex);
 
     // search logic
+    hashRecord *current = hashTable;
+    hashRecord *result = NULL;
+
+    while (current != NULL)
+    {
+        if (current->hash == hash && strcmp(current->name, name) == 0)
+        {
+            result = current;
+            break;
+        }
+
+        current = current->next;
+    }
 
     rwlock_release_readlock(&mutex);
-    return 0;
+
+    return result;
 }
 
 void printHashTable()
