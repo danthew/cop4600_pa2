@@ -25,8 +25,10 @@ uint32_t jenkins_one_at_a_time_hash(char *key)
 
 void insert(char *name, uint32_t salary)
 {
-    uint32_t hash = jenkins_one_at_a_time_hash(name);
+    uint32_t hash = jenkins_one_at_a_time_hash(name); // compute hash
 
+    // acquire write lock before modifying hash table to
+    // prevent other threads from reading/writing
     rwlock_acquire_writelock(&mutex);
 
     hashRecord *current = hashTable;
@@ -57,6 +59,7 @@ void insert(char *name, uint32_t salary)
     newRecord->hash = hash;
     newRecord->next = NULL;
 
+    // if prev is NULL list is empty and this is first node
     if (prev == NULL)
     {
         hashTable = newRecord;
@@ -76,7 +79,18 @@ void delete(char *name)
 
     rwlock_acquire_writelock(&mutex);
 
-    // deletion logic
+    hashRecord **current = &hashTable; // pointer to the pointer to the head of the list
+    while (*current != NULL)
+    {
+        hashRecord *entry = *current;
+        if (entry->hash == hash && strcmp(entry->name, name) == 0)
+        {
+            *current = entry->next; // remove node from list
+            free(entry);
+            break;
+        }
+        current = &entry->next; // move to next node
+    }
 
     rwlock_release_writelock(&mutex);
 }
