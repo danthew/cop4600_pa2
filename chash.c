@@ -57,8 +57,6 @@ void parse_command(const char *line) {
         log_command("SEARCH", name);
         search(name)
     } else if (strcmp(command, "print") == 0) {
-        // Print command
-        log_command("PRINT", "0");
         printHashTable()
     } else {
         fprintf(output_file, "Invalid command\n");
