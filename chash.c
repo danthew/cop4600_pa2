@@ -1,5 +1,6 @@
 #include <pthread.h> // you need to use unix/linux for this not windows
 #include <stdio.h>
+#include <stdlib.h>
 #include "hashdb.h"
 #include "rwlocks.h"
 
@@ -46,19 +47,19 @@ void parse_command(const char *line) {
     sscanf(line, "%s,%[^,],%u", command, name, &salary);
 
     if (strcmp(command, "insert") == 0) {
-        insert(name, salary)
+        insert(name, salary);
         char parameters[100];
         snprintf(parameters, sizeof(parameters), "%s,%u", name, salary);
         log_command("INSERT", parameters);
         
     } else if (strcmp(command, "delete") == 0) {
         log_command("DELETE", name);
-        delete(name)
+        delete(name);
     } else if (strcmp(command, "search") == 0) {
         log_command("SEARCH", name);
-        search(name)
+        search(name);
     } else if (strcmp(command, "print") == 0) {
-        printHashTable()
+        printHashTable();
     } else {
         fprintf(output_file, "Invalid command\n");
     }
@@ -109,12 +110,13 @@ void read_commands(const char *filename) {
     fprintf(output_file, "Number of lock acquisitions: %d\n", lockA);
     fprintf(output_file, "Number of lock releases: %d\n", lockR);
     fprintf(output_file, "Final Table:\n");
-    printHashTable()
+    printHashTable();
+    free(threads);
     fclose(file);
 }
 
 int main() {
-    output_file = fopen(output, "w");
+    output_file = fopen("output.txt", "w");
     if (output_file == NULL) {
         fprintf(stderr, "Error opening output file\n");
         exit(EXIT_FAILURE);
