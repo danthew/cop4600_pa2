@@ -1,4 +1,5 @@
 #include <pthread.h> // you need to use unix/linux for this not windows
+#include <stdio.h>
 #include "hashdb.h"
 #include "rwlocks.h"
 
