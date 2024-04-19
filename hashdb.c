@@ -9,8 +9,8 @@
 // head of hash table list
 hashRecord *hashTable = NULL;
 FILE *out;
-uint32_t lockA =0;
-uint32_t lockR =0;
+uint32_t lockA = 2;//starts at 2 because of the final print
+uint32_t lockR = 2;//starts at 2 because of the final print
 uint32_t getLockA(){
     return lockA;
 }
