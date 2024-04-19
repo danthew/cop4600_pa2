@@ -7,8 +7,7 @@
 #include <stdint.h>
 FILE *output_file;
 int thread_count = 0;
-int lockA =0;
-int lockR =0;
+
 
 void* execute_command(void *args);
 void log_command(const char *command, const char *parameters);
@@ -25,22 +24,11 @@ void* execute_command(void *args) {
     return NULL;
 }
 
-// Logging functions
 void log_command(const char *command, const char *parameters) {
     fprintf(output_file, "%s,%s\n", command, parameters);
 }
 
-void log_lock_acquisition(const char *lock_type) {
-    fprintf(output_file, "%s LOCK ACQUIRED\n", lock_type);
-    lockA++;
-}
 
-void log_lock_release(const char *lock_type) {
-    fprintf(output_file, "%s LOCK RELEASED\n", lock_type);
-    lockR++;
-}
-
-// Parsing functions
 void parse_command(const char *line) {
     char line_copy[100]; // Create a copy of the line
     strcpy(line_copy, line);
@@ -57,25 +45,26 @@ void parse_command(const char *line) {
     
 
     if (strcmp(command, "insert") == 0) {
-        insert(name, salary);
         char parameters[100];
         snprintf(parameters, sizeof(parameters), "%s,%u", name, salary);
         log_command("INSERT", parameters);
+        insert(name, salary);
+        
         
     } else if (strcmp(command, "delete") == 0) {
         log_command("DELETE", name);
         delete(name);
     } else if (strcmp(command, "search") == 0) {
         log_command("SEARCH", name);
-        search(name);
+        hashRecord *h = search(name);
+        fprintf(output_file, "%d,%s,%d\n", h->hash, h->name, h->salary);
     } else if (strcmp(command, "print") == 0) {
-        printHashTable();
+        printHashTable(output_file);
     } else {
         fprintf(output_file, "Invalid command\n");
     }
 }
 
-// Reading commands from file
 void read_commands( const char *filename) {
     
     FILE *file = fopen(filename, "r");
@@ -96,7 +85,7 @@ void read_commands( const char *filename) {
         fclose(file);
         exit(EXIT_FAILURE);
     }
-
+    fprintf(output_file, "Running %d threads\n", num_threads);
     // Initialize the number of threads
     if (num_threads <= 0) {
         fprintf(output_file, "Invalid number of threads\n");
@@ -105,6 +94,8 @@ void read_commands( const char *filename) {
     }
 
     pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
+    rwlock_init(&mutex);
+    setFile(output_file);
     while (fgets(line, sizeof(line), file)) {
         // Remove trailing newline
         line[strcspn(line, "\n")] = 0;
@@ -120,10 +111,10 @@ void read_commands( const char *filename) {
     for (int i = 0; i < thread_count; i++) {
         pthread_join(threads[i], NULL);
     }
-    fprintf(output_file, "Number of lock acquisitions: %d\n", lockA);
-    fprintf(output_file, "Number of lock releases: %d\n", lockR);
+    fprintf(output_file, "Number of lock acquisitions: %d\n", getLockA());
+    fprintf(output_file, "Number of lock releases: %d\n", getLockR());
     fprintf(output_file, "Final Table:\n");
-    printHashTable();
+    printHashTable(output_file);
     free(threads);
     fclose(file);
 }

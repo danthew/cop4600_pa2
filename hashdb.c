@@ -1,12 +1,25 @@
 #include "hashdb.h"
 #include "rwlocks.h"
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 // head of hash table list
 hashRecord *hashTable = NULL;
+FILE *out;
+uint32_t lockA =0;
+uint32_t lockR =0;
+uint32_t getLockA(){
+    return lockA;
+}
+uint32_t getLockR(){
+    return lockR;
+}
+void setFile(FILE *output_file){
+    out = output_file;
+}
 
 uint32_t jenkins_one_at_a_time_hash(char *key)
 {
@@ -26,12 +39,14 @@ uint32_t jenkins_one_at_a_time_hash(char *key)
 
 void insert(char *name, uint32_t salary)
 {
+    
     uint32_t hash = jenkins_one_at_a_time_hash(name); // compute hash
 
     // acquire write lock before modifying hash table to
     // prevent other threads from reading/writing
     rwlock_acquire_writelock(&mutex);
-
+    fprintf(out, "WRITE LOCK ACQUIRED\n");
+    lockA++;
     hashRecord *current = hashTable;
     hashRecord *prev = NULL;
 
@@ -42,6 +57,8 @@ void insert(char *name, uint32_t salary)
         {
             current->salary = salary;         // update the existing record
             rwlock_release_writelock(&mutex); // release the write lock
+            fprintf(out, "WRITE LOCK RELEASED\n");
+            lockR++;
             return;
         }
         prev = current;
@@ -72,6 +89,8 @@ void insert(char *name, uint32_t salary)
 
     // release write lock
     rwlock_release_writelock(&mutex);
+    fprintf(out, "WRITE LOCK RELEASED\n");
+    lockR++;
 }
 
 void delete(char *name)
@@ -79,6 +98,9 @@ void delete(char *name)
     uint32_t hash = jenkins_one_at_a_time_hash(name);
 
     rwlock_acquire_writelock(&mutex);
+    fprintf(out, "WRITE LOCK ACQUIRED\n");
+    lockA++;
+
 
     hashRecord **current = &hashTable; // pointer to the pointer to the head of the list
     while (*current != NULL)
@@ -94,6 +116,8 @@ void delete(char *name)
     }
 
     rwlock_release_writelock(&mutex);
+    fprintf(out, "WRITE LOCK RELEASED\n");
+    lockR++;
 }
 
 hashRecord* search(char *name)
@@ -101,6 +125,8 @@ hashRecord* search(char *name)
     uint32_t hash = jenkins_one_at_a_time_hash(name);
 
     rwlock_acquire_readlock(&mutex);
+    fprintf(out, "READ LOCK ACQUIRED\n");
+    lockA++;
 
     // search logic
     hashRecord *current = hashTable;
@@ -118,6 +144,8 @@ hashRecord* search(char *name)
     }
 
     rwlock_release_readlock(&mutex);
+    fprintf(out, "READ LOCK RELEASED\n");
+    lockR++;
 
     return result;
 }
@@ -125,13 +153,17 @@ hashRecord* search(char *name)
 void printHashTable()
 {
     rwlock_acquire_readlock(&mutex);
+    fprintf(out, "READ LOCK ACQUIRED\n");
+    lockA++;
 
     hashRecord *current = hashTable;
     while (current != NULL)
     {
-        printf("%u, %s, %u\n", current->hash, current->name, current->salary);
+        fprintf(out,"%u, %s, %u\n", current->hash, current->name, current->salary);
         current = current->next;
     }
 
     rwlock_release_readlock(&mutex);
+    fprintf(out, "READ LOCK RELEASED\n");
+    lockR++;
 }
