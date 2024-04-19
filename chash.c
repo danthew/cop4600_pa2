@@ -4,18 +4,19 @@
 #include "hashdb.h"
 #include "rwlocks.h"
 #include <string.h>
+#include <stdint.h>
+FILE *output_file;
+int thread_count = 0;
+int lockA =0;
+int lockR =0;
 
 void* execute_command(void *args);
 void log_command(const char *command, const char *parameters);
 void log_lock_acquisition(const char *lock_type);
 void log_lock_release(const char *lock_type);
 void parse_command(const char *line);
-void read_commands(const char *filename);
+void read_commands( const char *filename);
 
-FILE *output_file;
-int thread_count = 0;
-int lockA =0;
-int lockR =0;
 
 void* execute_command(void *args) {
     char *command = (char *)args;
@@ -41,11 +42,19 @@ void log_lock_release(const char *lock_type) {
 
 // Parsing functions
 void parse_command(const char *line) {
+    char line_copy[100]; // Create a copy of the line
+    strcpy(line_copy, line);
     char command[100];
     char name[50];
     uint32_t salary;
+    char *token = strtok(line_copy, ",");
+    strcpy(command, token);
+    token = strtok(NULL, ",");
+    strcpy(name, token);
+    token = strtok(NULL, ",");
+    salary = atoi(token);
+    //printf( "%s %s %d \n",command,name,salary);
     
-    sscanf(line, "%s,%[^,],%u", command, name, &salary);
 
     if (strcmp(command, "insert") == 0) {
         insert(name, salary);
@@ -67,7 +76,8 @@ void parse_command(const char *line) {
 }
 
 // Reading commands from file
-void read_commands(const char *filename) {
+void read_commands( const char *filename) {
+    
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         fprintf(output_file, "Error opening file\n");
@@ -93,11 +103,13 @@ void read_commands(const char *filename) {
         fclose(file);
         exit(EXIT_FAILURE);
     }
+
     pthread_t *threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
     while (fgets(line, sizeof(line), file)) {
         // Remove trailing newline
         line[strcspn(line, "\n")] = 0;
         char *command = strdup(line);
+        
         if (pthread_create(&threads[thread_count], NULL, execute_command, command) != 0) {
             fprintf(output_file, "Error creating thread\n");
             free(command);
@@ -115,13 +127,14 @@ void read_commands(const char *filename) {
     free(threads);
     fclose(file);
 }
-
 int main() {
     output_file = fopen("output.txt", "w");
     if (output_file == NULL) {
         fprintf(stderr, "Error opening output file\n");
         exit(EXIT_FAILURE);
     }
+    
     read_commands("commands.txt");
+    fclose(output_file);
     return 0;
 }
