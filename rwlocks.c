@@ -1,6 +1,8 @@
-#include "rwlocks.h"
-
 #include <semaphore.h>
+
+#include "rwlocks.h"
+#include "common.h"
+#include "common_threads.h"
 
 rwlock_t mutex;
 
