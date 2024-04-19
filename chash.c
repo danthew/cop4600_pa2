@@ -111,6 +111,7 @@ void read_commands( const char *filename) {
     for (int i = 0; i < thread_count; i++) {
         pthread_join(threads[i], NULL);
     }
+    
     fprintf(output_file, "Number of lock acquisitions: %d\n", getLockA());
     fprintf(output_file, "Number of lock releases: %d\n", getLockR());
     fprintf(output_file, "Final Table:\n");
@@ -118,6 +119,7 @@ void read_commands( const char *filename) {
     free(threads);
     fclose(file);
 }
+
 int main() {
     output_file = fopen("output.txt", "w");
     if (output_file == NULL) {

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
 typedef struct hash_struct
 {
     uint32_t hash;
@@ -10,6 +11,7 @@ typedef struct hash_struct
     uint32_t salary;
     struct hash_struct *next;
 } hashRecord;
+
 uint32_t getLockA();
 uint32_t getLockR();
 void setFile(FILE *output_file);
