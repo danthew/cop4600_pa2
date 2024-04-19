@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // head of hash table list
 hashRecord *hashTable = NULL;

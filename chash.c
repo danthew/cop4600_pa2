@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "hashdb.h"
 #include "rwlocks.h"
+#include <string.h>
 
 void* execute_command(void *args);
 void log_command(const char *command, const char *parameters);

@@ -13,7 +13,7 @@ typedef struct hash_struct
 
 void insert(char *name, uint32_t salary);
 void delete(char *name);
-uint32_t search(char *name);
+hashRecord* search(char *name);
 void printHashTable();
 
 #endif
