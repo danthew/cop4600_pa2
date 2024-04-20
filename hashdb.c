@@ -151,16 +151,40 @@ hashRecord* search(char *name)
 }
 
 void printHashTable()
-{
+{    
     rwlock_acquire_readlock(&mutex);
     fprintf(out, "READ LOCK ACQUIRED\n");
     lockA++;
 
+    int hashTableLength = 0;
     hashRecord *current = hashTable;
     while (current != NULL)
     {
-        fprintf(out,"%u, %s, %u\n", current->hash, current->name, current->salary);
+        // fprintf(out, "%u, %s, %u\n", current->hash, current->name, current->salary);
+        hashTableLength++;
         current = current->next;
+    }
+
+    hashRecord records[hashTableLength];
+    hashRecord *current2 = hashTable;
+    for (int i = 0; current2 != NULL; i++) {
+        records[i] = *current2;
+        current2 = current2->next;
+    }
+
+    for (int i = 0; i < hashTableLength; i++) {
+        for (int j = i + 1; j < hashTableLength; j++) {
+            if (records[i].hash > records[j].hash) {
+                hashRecord temp = records[i];
+                records[i] = records[j];
+                records[j] = temp;
+            }
+        }
+    }
+
+    for (int i = 0; i < hashTableLength; i++)
+    {
+        fprintf(out, "%u, %s, %u\n", records[i].hash, records[i].name, records[i].salary);
     }
 
     rwlock_release_readlock(&mutex);
